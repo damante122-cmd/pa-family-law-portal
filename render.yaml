@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: pa-family-law-portal
-    runtime: node
-    buildCommand: npm install
-    startCommand: npm start
+    name: pa-family-law-app
+    env: node
     plan: free
+    buildCommand: npm install
+    startCommand: node server.js
