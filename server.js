@@ -6,6 +6,13 @@ const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: Object });
+}
+
 const upload = multer({ dest: 'uploads/' });
 
 app.use(express.json());
@@ -27,7 +34,9 @@ app.post('/api/scan', upload.single('document'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded." });
 
   fs.readFile(req.file.path, 'utf8', (err, textData) => {
-    fs.unlink(req.file.path, () => {});
+    if (fs.existsSync(req.file.path)) {
+      fs.unlink(req.file.path, () => {});
+    }
     const content = (textData || "").toLowerCase();
 
     db.all("SELECT * FROM motions", [], (err, motions) => {
@@ -35,7 +44,7 @@ app.post('/api/scan', upload.single('document'), (req, res) => {
 
       const matches = [];
       motions.forEach(motion => {
-        const triggerList = motion.triggers.split(',');
+        const triggerList = motion.triggers ? motion.triggers.split(',') : [];
         const foundTriggers = triggerList.filter(t => content.includes(t.trim()));
         if (foundTriggers.length > 0) {
           matches.push({
